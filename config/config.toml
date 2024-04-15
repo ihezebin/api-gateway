@@ -1,23 +1,18 @@
-service_name = "go-template-ddd-toml"
+service_name = "api-gateway"
 port = 8080
 
-mongo_dsn = "mongodb://root:root@127.0.0.1:27017/go-template-ddd?authSource=admin"
-mysql_dsn = "mysql://root:root@127.0.0.1:3306/go-template-ddd?charset=utf8mb4&parseTime=True&loc=Local"
-
 [logger]
-    level = "info"
+    level = "debug"
     filename = "go-template-ddd.log"
 
 [redis]
     addr = "127.0.0.1:6379"
     password = "root"
 
-#[pulsar]
-#    url = "pulsar://localhost:6650"
-#    topic = "persistent://public/default/go-template-ddd"
-#    subscription = "go-template-ddd"
+[[endpoints]]
+    name = "user-service"
+    host = "http://127.0.0.1:9000"
 
-#[kafka]
-#    address = "127.0.0.1:9092"
-#    topic = "go-template-ddd"
-#    partition = 0
+[[endpoints]]
+    name = "blog"
+    host = "http://127.0.0.1:9001"

@@ -1,37 +1,22 @@
 package config
 
 import (
+	"api-gateway/domain/entity"
 	"os"
 
 	"github.com/ihezebin/oneness/config"
-	"github.com/ihezebin/oneness/email"
 	"github.com/ihezebin/oneness/logger"
 	"github.com/pkg/errors"
 )
 
 type Config struct {
-	ServiceName string        `json:"service_name" mapstructure:"service_name"`
-	Port        uint          `json:"port" mapstructure:"port"`
-	MongoDsn    string        `json:"mongo_dsn" mapstructure:"mongo_dsn"`
-	MysqlDsn    string        `json:"mysql_dsn" mapstructure:"mysql_dsn"`
-	Pwd         string        `json:"-" mapstructure:"-"`
-	Logger      *LoggerConfig `json:"logger" mapstructure:"logger"`
-	Redis       *RedisConfig  `json:"redis" mapstructure:"redis"`
-	Email       *email.Config `json:"email" mapstructure:"email"`
-	Pulsar      *PulsarConfig `json:"pulsar" mapstructure:"pulsar"`
-	Kafka       *KafkaConfig  `json:"kafka" mapstructure:"kafka"`
-}
-
-type PulsarConfig struct {
-	Url          string `json:"url" mapstructure:"url"`
-	Topic        string `json:"topic" mapstructure:"topic"`
-	Subscription string `json:"subscription" mapstructure:"subscription"`
-}
-
-type KafkaConfig struct {
-	Address   string `json:"address" mapstructure:"address"`
-	Topic     string `json:"topic" mapstructure:"topic"`
-	Partition int    `json:"partition" mapstructure:"partition"`
+	ServiceName string             `json:"service_name" mapstructure:"service_name"`
+	Port        uint               `json:"port" mapstructure:"port"`
+	Pwd         string             `json:"-" mapstructure:"-"`
+	Logger      *LoggerConfig      `json:"logger" mapstructure:"logger"`
+	Redis       *RedisConfig       `json:"redis" mapstructure:"redis"`
+	Endpoints   []*entity.Endpoint `json:"endpoints" mapstructure:"endpoints"`
+	Rules       []*entity.Rule     `json:"-" mapstructure:"-"`
 }
 
 type RedisConfig struct {
@@ -44,26 +29,32 @@ type LoggerConfig struct {
 	Filename string       `json:"filename" mapstructure:"filename"`
 }
 
-var gConfig *Config
+var gConfig *Config = &Config{}
 
 func GetConfig() *Config {
-	if gConfig == nil {
-		gConfig = &Config{}
-	}
 	return gConfig
 }
 
-func Load(path string) (*Config, error) {
+func Load(path string, rulePaths ...string) (*Config, error) {
 	pwd, err := os.Getwd()
 	if err != nil {
 		return nil, errors.Wrap(err, "get pwd error")
 	}
 
-	if err = config.NewWithFilePath(path).Load(&gConfig); err != nil {
+	if err = config.NewWithFilePath(path).Load(gConfig); err != nil {
 		return nil, errors.Wrap(err, "load config error")
 	}
-
 	gConfig.Pwd = pwd
+
+	rules := make([]*entity.Rule, 0)
+	for _, rulePath := range rulePaths {
+		ruleConfig := new(entity.Rule)
+		if err = config.NewWithFilePath(rulePath).Load(ruleConfig); err != nil {
+			return nil, errors.Wrapf(err, "load rule config error, rule path: %s", rulePath)
+		}
+		rules = append(rules, ruleConfig)
+	}
+	gConfig.Rules = rules
 
 	return gConfig, nil
 }

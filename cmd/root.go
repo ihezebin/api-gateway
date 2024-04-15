@@ -2,10 +2,7 @@ package cmd
 
 import (
 	"api-gateway/component/cache"
-	"api-gateway/component/storage"
 	"api-gateway/config"
-	"api-gateway/domain/repository"
-	"api-gateway/domain/service"
 	"api-gateway/server"
 	"context"
 	"os"
@@ -19,6 +16,7 @@ import (
 
 var (
 	configPath string
+	rulePaths  cli.StringSlice
 )
 
 func Run(ctx context.Context) error {
@@ -31,14 +29,24 @@ func Run(ctx context.Context) error {
 			{Name: "hezebin", Email: "ihezebin@qq.com"},
 		},
 		Flags: []cli.Flag{
-			&cli.StringFlag{Destination: &configPath, Name: "config", Aliases: []string{"c"}, Value: "./config/config.toml", Usage: "config file path (default find file from pwd and exec dir"},
+			&cli.StringFlag{
+				Destination: &configPath,
+				Name:        "config",
+				Aliases:     []string{"c"},
+				Value:       "./config/config.toml",
+				Usage:       "config file path (default find file from pwd and exec dir"},
+			&cli.StringSliceFlag{
+				Destination: &rulePaths, Name: "rule_path",
+				Aliases: []string{"r"},
+				Value:   cli.NewStringSlice("./config/config.toml"),
+				Usage:   "config file path (default find file from pwd and exec dir"},
 		},
 		Before: func(c *cli.Context) error {
 			if configPath == "" {
 				return errors.New("config path is empty")
 			}
 
-			conf, err := config.Load(configPath)
+			conf, err := config.Load(configPath, rulePaths.Value()...)
 			if err != nil {
 				return errors.Wrapf(err, "load config error, path: %s", configPath)
 			}
@@ -52,7 +60,7 @@ func Run(ctx context.Context) error {
 			return nil
 		},
 		Action: func(c *cli.Context) error {
-			if err := server.Run(ctx, config.GetConfig().Port); err != nil {
+			if err := server.Run(ctx, config.GetConfig()); err != nil {
 				logger.WithError(err).Fatalf(ctx, "server run error, port: %d", config.GetConfig().Port)
 			}
 
@@ -75,13 +83,6 @@ func initComponents(ctx context.Context, conf *config.Config) error {
 		)
 	}
 
-	// init storage
-	if conf.MongoDsn != "" {
-		if err := storage.InitMongoStorageClient(ctx, conf.MongoDsn); err != nil {
-			return errors.Wrap(err, "init mongo storage client error")
-		}
-	}
-
 	// init cache
 	cache.InitMemoryCache(time.Minute*5, time.Minute)
 	if conf.Redis != nil {
@@ -89,12 +90,6 @@ func initComponents(ctx context.Context, conf *config.Config) error {
 			return errors.Wrap(err, "init redis cache client error")
 		}
 	}
-
-	// init repository
-	repository.Init()
-
-	// init service
-	service.Init()
 
 	return nil
 }

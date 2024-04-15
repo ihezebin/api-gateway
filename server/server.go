@@ -1,11 +1,12 @@
 package server
 
 import (
-	"context"
-
+	"api-gateway/config"
 	"api-gateway/server/handler"
 	"api-gateway/server/middleware"
 	_ "api-gateway/server/swagger/docs"
+	"context"
+
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 	"github.com/ihezebin/oneness/httpserver"
@@ -26,22 +27,23 @@ type Body struct {
 // @description 这是一个使用 Gin 和 Swagger 生成 API 文档的示例。
 // @host localhost:8080
 // @BasePath /
-func Run(ctx context.Context, port uint) error {
+func Run(ctx context.Context, conf *config.Config) error {
 	serverHandler := httpserver.NewServerHandlerWithOptions(
 		httpserver.WithLoggingRequest(false),
 		httpserver.WithLoggingResponse(false),
-		httpserver.WithMiddlewares(middleware.Cors()),
-		httpserver.WithRouters("",
-			handler.NewExampleHandler(),
-			// ... other handlers
+		httpserver.WithMiddlewares(
+			middleware.Cors(),
+			middleware.RuleMatcher(conf.Endpoints, conf.Rules),
+			middleware.Authentication(),
 		),
 	)
 
 	pprof.Register(serverHandler)
 	serverHandler.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	serverHandler.GET("/metrics", gin.WrapH(promhttp.Handler()))
+	serverHandler.NoRoute(handler.Proxy)
 
 	httpserver.ResetServerHandler(serverHandler)
 
-	return httpserver.Run(ctx, port)
+	return httpserver.Run(ctx, conf.Port)
 }
