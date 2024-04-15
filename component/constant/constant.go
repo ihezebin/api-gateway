@@ -1,7 +1,11 @@
 package constant
 
 const (
-	TokenSecret = "ihezebin"
+	TokenSecret = "hezebin.com"
 
-	ProxyPathKey = "proxy_path"
+	ProxyPathKey      = "proxy_path"
+	AuthenticationKey = "authentication"
+
+	HeaderKeyToken = "Token"
+	HeaderKeyUid   = "Uid"
 )
