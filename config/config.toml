@@ -3,7 +3,7 @@ port = 80
 
 [logger]
     level = "debug"
-    filename = "go-template-ddd.log"
+    filename = "api-gateway.log"
 
 [redis]
     addr = "127.0.0.1:6379"
