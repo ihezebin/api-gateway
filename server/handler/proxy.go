@@ -2,45 +2,62 @@ package handler
 
 import (
 	"api-gateway/component/constant"
+	"io"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/ihezebin/oneness/httpclient"
+	"github.com/ihezebin/oneness/httpserver"
 	"github.com/ihezebin/oneness/logger"
 )
 
 func Proxy(c *gin.Context) {
 	ctx := c.Request.Context()
+	body := &httpserver.Body{}
 
-	newPath, err := url.Parse(c.GetString(constant.ProxyPathKey))
+	timeout := c.GetInt(constant.ProxyTimeoutKey)
+	newPath := c.GetString(constant.ProxyPathKey)
+	newHost := c.GetString(constant.ProxyHostKey)
+
+	hostUrl, err := url.Parse(newHost)
 	if err != nil {
-		c.AbortWithStatus(http.StatusBadGateway)
+		logger.WithError(err).Errorf(ctx, "parse url error, url: %s", newHost)
+		body.WithErrorx(httpserver.ErrorWithCode(httpserver.CodeInternalServerError))
+		c.AbortWithStatusJSON(http.StatusInternalServerError, body)
 		return
 	}
-	// 代理请求
-	oldPath := c.Request.URL.Path
-	req := new(http.Request)
-	*req = *(c.Request)
-	req.URL = newPath
-	req = req.WithContext(ctx)
-	req.RequestURI = ""
 
-	logger.Infof(ctx, "%s [%s] => [%s]", c.Request.Method, oldPath, req.URL.String())
+	request := c.Request
+	oldPath := request.URL.Path
 
-	//resp, err := httpc.GetGlobalClient().Kernel().GetClient().Do(req)
-	//if err != nil {
-	//	c.JSON(http.StatusBadGateway, result.Failed(err))
-	//	return
-	//}
-	//defer func() {
-	//	_ = resp.Body.Close()
-	//}()
+	newUrl := request.URL
+	newUrl.Host = hostUrl.Host
+	newUrl.Scheme = hostUrl.Scheme
+	newUrl.Path = newPath
 
-	//for key, values := range resp.Header {
-	//	for _, value := range values {
-	//		c.Writer.Header().Add(key, value)
-	//	}
-	//}
-	//c.Writer.WriteHeader(resp.StatusCode)
-	//_, _ = io.Copy(c.Writer, resp.Body)
+	request.URL = newUrl
+	// 重置为新 request
+	request.RequestURI = ""
+
+	logger.Infof(ctx, "%s [%s] => [%s]", c.Request.Method, oldPath, newPath)
+
+	response, err := httpclient.Client().SetTimeout(time.Duration(timeout) * time.Second).GetClient().Do(request)
+	if err != nil {
+		logger.WithError(err).Errorf(ctx, "http client do error")
+		body.WithErrorx(httpserver.ErrorWithCode(httpserver.CodeInternalServerError))
+		c.AbortWithStatusJSON(http.StatusInternalServerError, body)
+		return
+	}
+
+	for k, vs := range response.Header {
+		for _, v := range vs {
+			c.Writer.Header().Add(k, v)
+		}
+	}
+	c.Writer.WriteHeader(response.StatusCode)
+	if _, err = io.Copy(c.Writer, response.Body); err != nil {
+		logger.WithError(err).Errorf(ctx, "io copy error")
+	}
 }

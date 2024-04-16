@@ -1,5 +1,5 @@
 service_name = "api-gateway"
-port = 8080
+port = 80
 
 [logger]
     level = "debug"
@@ -8,6 +8,10 @@ port = 8080
 [redis]
     addr = "127.0.0.1:6379"
     password = "root"
+
+[[endpoints]]
+    name = "go-template-ddd"
+    host = "http://127.0.0.1:8080"
 
 [[endpoints]]
     name = "user-service"

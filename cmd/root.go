@@ -38,7 +38,7 @@ func Run(ctx context.Context) error {
 			&cli.StringSliceFlag{
 				Destination: &rulePaths, Name: "rule_path",
 				Aliases: []string{"r"},
-				Value:   cli.NewStringSlice("./config/config.toml"),
+				Value:   cli.NewStringSlice("./config/global.toml", "./config/blog.toml"),
 				Usage:   "config file path (default find file from pwd and exec dir"},
 		},
 		Before: func(c *cli.Context) error {

@@ -10,8 +10,8 @@ domains = ["*user-service.hezebin.com"]
     auth = true
     desc = "用户服务"
     priority = 0
-[uris.rewrite]
-    "/user-service" = "/"
+    [uris.rewrite]
+        "/user-service" = "/"
 
 [[uris]]
     paths = ["/user-service/*"]
@@ -19,7 +19,7 @@ domains = ["*user-service.hezebin.com"]
     auth = true
     desc = " 用户服务"
     priority = 0
-[uris.rewrite]
-    "/user-service" = "/"
+    [uris.rewrite]
+        "/user-service" = "/"
 
 

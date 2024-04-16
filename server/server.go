@@ -4,7 +4,6 @@ import (
 	"api-gateway/config"
 	"api-gateway/server/handler"
 	"api-gateway/server/middleware"
-	_ "api-gateway/server/swagger/docs"
 	"context"
 
 	"github.com/gin-contrib/pprof"

@@ -1,0 +1,8 @@
+[[uris]]
+    paths = ["/global/*"]
+    endpoint = "go-template-ddd"
+    auth = true
+    desc = "测试"
+    priority = 0
+    [uris.rewrite]
+        "/global" = "/"
