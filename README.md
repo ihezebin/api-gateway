@@ -1,6 +1,6 @@
 # api-gateway
 
-一个带有认证功能的 API 代理服务，可以基于 domain、header 匹配后再进行 uri 匹配、重写、代理。
+一个带有认证功能的 API 代理服务，可以基于 domain、header 进行类似命名空间的配置分区后，再进行 uri 路由规则匹配、重写、代理。
 
 ## endpoint
 能代理到的服务列表
