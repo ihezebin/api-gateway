@@ -1,25 +1,11 @@
 timeout = 5
 domains = ["*blog.hezebin.com"]
 
-[headers]
-    "Endpoint" = "blog"
-
 [[uris]]
-    paths = ["/blog/*"]
+    paths = ["/api/*"]
     endpoint = "blog"
-    auth = true
-    desc = "博客服务"
+    auth = false
+    desc = "博客无需鉴权的 API"
     priority = 0
     [uris.rewrite]
-        "/blog" = "/"
-
-[[uris]]
-    paths = ["/blog-service/*"]
-    endpoint = "blog"
-    auth = true
-    desc = "博客服务"
-    priority = 0
-    [uris.rewrite]
-        "/blog" = "/"
-
-
+        "/api" = "/"

@@ -1,0 +1,12 @@
+timeout = 5
+domains = ["*sso.hezebin.com"]
+
+[[uris]]
+    paths = ["/api/*"]
+    endpoint = "user-center"
+    auth = false
+    desc = "无需鉴权的用户服务"
+    priority = 0
+    [uris.rewrite]
+        "/api" = "/"
+

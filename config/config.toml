@@ -1,22 +1,18 @@
 service_name = "api-gateway"
-port = 80
+port = 8080
 
 [logger]
     level = "debug"
     filename = "api-gateway.log"
 
 [redis]
-    addr = "127.0.0.1:6379"
-    password = "root"
-
-[[endpoints]]
-    name = "go-template-ddd"
-    host = "http://127.0.0.1:8080"
-
-[[endpoints]]
-    name = "user-service"
-    host = "http://127.0.0.1:9000"
+    addrs = ["redis-sts-0.redis.default:7000", "redis-sts-1.redis.default:7000", "redis-sts-2.redis.default:7000"]
+    password = "HZB183318a."
 
 [[endpoints]]
     name = "blog"
-    host = "http://127.0.0.1:9001"
+    host = "http://blog-service"
+
+[[endpoints]]
+    name = "user-center"
+    host = "http://user-center-service"

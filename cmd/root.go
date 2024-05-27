@@ -38,13 +38,15 @@ func Run(ctx context.Context) error {
 			&cli.StringSliceFlag{
 				Destination: &rulePaths, Name: "rule_path",
 				Aliases: []string{"r"},
-				Value:   cli.NewStringSlice("./config/global.toml", "./config/blog.toml"),
+				Value:   cli.NewStringSlice("./config/blog.toml", "./config/sso.toml"),
 				Usage:   "config file path (default find file from pwd and exec dir"},
 		},
 		Before: func(c *cli.Context) error {
 			if configPath == "" {
 				return errors.New("config path is empty")
 			}
+
+			logger.Infof(ctx, "config path: %s, rule path: %s", configPath, rulePaths.Value())
 
 			conf, err := config.Load(configPath, rulePaths.Value()...)
 			if err != nil {
@@ -76,7 +78,7 @@ func initComponents(ctx context.Context, conf *config.Config) error {
 	if conf.Logger != nil {
 		logger.ResetLoggerWithOptions(
 			logger.WithServiceName(conf.ServiceName),
-			logger.WithCallerPrettyHook(),
+			logger.WithPrettyCallerHook(),
 			logger.WithTimestampHook(),
 			logger.WithLevel(conf.Logger.Level),
 			logger.WithLocalFsHook(filepath.Join(conf.Pwd, conf.Logger.Filename)),
@@ -86,7 +88,7 @@ func initComponents(ctx context.Context, conf *config.Config) error {
 	// init cache
 	cache.InitMemoryCache(time.Minute*5, time.Minute)
 	if conf.Redis != nil {
-		if err := cache.InitRedisCache(ctx, conf.Redis.Addr, conf.Redis.Password); err != nil {
+		if err := cache.InitRedisCache(ctx, conf.Redis.Addrs, conf.Redis.Password); err != nil {
 			return errors.Wrap(err, "init redis cache client error")
 		}
 	}
