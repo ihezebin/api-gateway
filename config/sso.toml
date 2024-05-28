@@ -1,5 +1,5 @@
 timeout = 5
-domains = ["*sso.hezebin.com"]
+domains = ["sso.hezebin.com"]
 
 [[uris]]
     paths = ["/api/*"]
