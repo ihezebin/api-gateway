@@ -41,7 +41,7 @@ func Proxy(c *gin.Context) {
 	// 重置为新 request
 	request.RequestURI = ""
 
-	logger.Infof(ctx, "%s [%s] => [%s]", c.Request.Method, oldPath, newPath)
+	logger.Infof(ctx, "%s [%s] => [%s][%s]", c.Request.Method, oldPath, newHost, newPath)
 
 	response, err := httpclient.Client().SetTimeout(time.Duration(timeout) * time.Second).GetClient().Do(request)
 	if err != nil {

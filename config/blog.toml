@@ -1,5 +1,5 @@
 timeout = 5
-domains = ["blog.hezebin.com"]
+domains = ["blog.hezebin.com", "localhost:8080"]
 
 [[uris]]
     paths = ["/api/*"]
@@ -9,3 +9,13 @@ domains = ["blog.hezebin.com"]
     priority = 0
     [uris.rewrite]
         "/api" = "/"
+
+
+[[uris]]
+    paths = ["/api/user/*"]
+    endpoint = "user-center"
+    auth = false
+    desc = "用户中心 API"
+    priority = 1
+    [uris.rewrite]
+    "/api" = "/"
