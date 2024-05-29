@@ -59,9 +59,9 @@ func Authentication() gin.HandlerFunc {
 		// 传递账号ID
 		c.Request.Header.Set(constant.HeaderKeyUid, token.Payload().Owner)
 
-		query := c.Request.URL.Query()
-		query.Set(constant.QueryKeyUid, token.Payload().Owner)
-		c.Request.URL.RawQuery = query.Encode()
+		//query := c.Request.URL.Query()
+		//query.Set(constant.QueryKeyUid, token.Payload().Owner)
+		//c.Request.URL.RawQuery = query.Encode()
 
 		c.Next()
 	}
