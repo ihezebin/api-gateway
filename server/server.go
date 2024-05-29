@@ -9,6 +9,7 @@ import (
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 	"github.com/ihezebin/oneness/httpserver"
+	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -27,12 +28,17 @@ type Body struct {
 // @host localhost:8080
 // @BasePath /
 func Run(ctx context.Context, conf *config.Config) error {
+	matcher, err := middleware.RuleMatcher(conf.Endpoints, conf.Rules)
+	if err != nil {
+		return errors.Wrapf(err, "init rule matcher error")
+	}
+
 	serverHandler := httpserver.NewServerHandlerWithOptions(
 		httpserver.WithLoggingRequest(false),
 		httpserver.WithLoggingResponse(false),
 		httpserver.WithMiddlewares(
 			middleware.Cors(),
-			middleware.RuleMatcher(conf.Endpoints, conf.Rules),
+			matcher,
 			middleware.Authentication(),
 		),
 	)

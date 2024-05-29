@@ -38,7 +38,7 @@ func Run(ctx context.Context) error {
 			&cli.StringSliceFlag{
 				Destination: &rulePaths, Name: "rule_path",
 				Aliases: []string{"r"},
-				Value:   cli.NewStringSlice("./config/blog.toml", "./config/sso.toml"),
+				Value:   cli.NewStringSlice("./config/global.toml", "./config/blog.toml", "./config/sso.toml"),
 				Usage:   "config file path (default find file from pwd and exec dir"},
 		},
 		Before: func(c *cli.Context) error {
@@ -57,7 +57,7 @@ func Run(ctx context.Context) error {
 				return errors.Wrap(err, "init components error")
 			}
 
-			logger.Debugf(ctx, "component init success, config: %+v", *conf)
+			logger.Debugf(ctx, "component init success, config: %s", conf.String())
 
 			return nil
 		},

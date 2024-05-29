@@ -3,6 +3,7 @@ package middleware
 import (
 	"api-gateway/component/constant"
 	"api-gateway/domain/entity"
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -10,17 +11,21 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/ihezebin/oneness/httpserver"
 	"github.com/ihezebin/oneness/logger"
+	"github.com/pkg/errors"
 )
 
-func RuleMatcher(endpoints []*entity.Endpoint, rules []*entity.Rule) gin.HandlerFunc {
-	initialize(endpoints, rules)
+func RuleMatcher(endpoints []*entity.Endpoint, rules []*entity.Rule) (gin.HandlerFunc, error) {
+	m, err := initialize(endpoints, rules)
+	if err != nil {
+		return nil, err
+	}
 
 	return func(c *gin.Context) {
 		domain := c.Request.Host
 		header := c.Request.Header
 		path := c.Request.URL.Path
 
-		rule := matcher.FindRule(domain, header)
+		rule := m.FindRule(domain, header)
 
 		timeout := rule.Timeout
 		if timeout == 0 {
@@ -36,7 +41,7 @@ func RuleMatcher(endpoints []*entity.Endpoint, rules []*entity.Rule) gin.Handler
 			c.AbortWithStatusJSON(http.StatusNotFound, body)
 			return
 		}
-		host := matcher.FindEndpointHost(uri.Endpoint)
+		host := m.FindEndpointHost(uri.Endpoint)
 
 		c.Set(constant.ProxyPathKey, newPath)
 		c.Set(constant.ProxyHostKey, host)
@@ -44,18 +49,14 @@ func RuleMatcher(endpoints []*entity.Endpoint, rules []*entity.Rule) gin.Handler
 		c.Set(constant.AuthenticationKey, uri.Auth)
 
 		c.Next()
-	}
+	}, nil
 }
 
-type Matcher struct {
+type matcher struct {
 	endpointName2HostM map[string]string
-	header2RuleM       map[string]*entity.Rule
 	domain2RuleM       map[string]*entity.Rule
-	domainAndHeader2M  map[string]*entity.Rule
-	globalRule         *entity.Rule
+	globalRules        []*entity.Rule
 }
-
-var matcher *Matcher
 
 func headerKey(headerK string, headerV ...string) string {
 	return fmt.Sprintf("%s=%s", headerK, strings.Join(headerV, ","))
@@ -65,122 +66,79 @@ func domainAndHeaderKey(domain string, headerKey string) string {
 	return fmt.Sprintf("%s&%s", domain, headerKey)
 }
 
-func (m *Matcher) FindRule(domain string, header http.Header) *entity.Rule {
-	var headerRule *entity.Rule
-	// 优先匹配 domain&header
-	for headerK, headerV := range header {
-		rule, ok := m.domain2RuleM[domainAndHeaderKey(domain, headerKey(headerK, headerV...))]
-		if ok {
-			return rule
+func (m *matcher) FindRule(domain string, header http.Header) *entity.Rule {
+	// 匹配 domain
+	rule, ok := m.domain2RuleM[domain]
+	if ok {
+		// 匹配 header
+		for k, v := range rule.Headers {
+			if header.Get(k) != v {
+				return nil
+			}
 		}
-
-		headerRule = m.header2RuleM[headerKey(headerK, headerV...)]
-	}
-
-	// 仅 domain 匹配
-	for k, rule := range m.domain2RuleM {
-		if k == domain {
-			return rule
-		}
-	}
-
-	// 仅 header 匹配
-	if headerRule != nil {
-		return headerRule
+		return rule
 	}
 
 	// 全局规则
-	return m.globalRule
+	for _, globalRule := range m.globalRules {
+		// 匹配 header
+		for k, v := range globalRule.Headers {
+			if header.Get(k) != v {
+				return nil
+			}
+		}
+		return globalRule
+	}
+
+	return nil
 }
 
-func (m *Matcher) FindEndpointHost(name string) string {
+func (m *matcher) FindEndpointHost(name string) string {
 	return m.endpointName2HostM[name]
 }
 
-func initialize(endpoints []*entity.Endpoint, rules []*entity.Rule) {
+func initialize(endpoints []*entity.Endpoint, rules []*entity.Rule) (*matcher, error) {
 	endpointName2HostM := make(map[string]string)
-
-	header2RuleM := make(map[string]*entity.Rule)
 	domain2RuleM := make(map[string]*entity.Rule)
-	domainAndHeader2M := make(map[string]*entity.Rule)
-	var globalRule *entity.Rule
+	globalRules := make([]*entity.Rule, 0)
 
+	endpointNames := make([]string, 0)
 	for _, endpoint := range endpoints {
 		endpointName2HostM[endpoint.Name] = endpoint.Host
+		endpointNames = append(endpointNames, endpoint.Name)
 	}
 
+	domains := make([]string, 0)
 	for _, rule := range rules {
-		if len(rule.Headers) == 0 && len(rule.Domains) == 0 {
-			if globalRule == nil {
-				globalRule = rule
-			} else { // 合并规则
-				globalRule.Uris = append(globalRule.Uris, rule.Uris...)
-			}
+		// 全局规则
+		if len(rule.Domains) == 0 {
+			globalRules = append(globalRules, rule)
 			continue
-		}
-
-		if len(rule.Headers) > 0 && len(rule.Domains) > 0 {
-			for _, domain := range rule.Domains {
-				for headerK, headerV := range rule.Headers {
-					key := domainAndHeaderKey(domain, headerKey(headerK, headerV))
-					r, ok := domainAndHeader2M[key]
-					if ok {
-						r.Uris = append(r.Uris, rule.Uris...)
-					} else {
-						r = rule
-					}
-
-					domainAndHeader2M[key] = r
-				}
-			}
-			continue
-		}
-
-		for headerK, headerV := range rule.Headers {
-			key := fmt.Sprintf("%s=%s", headerK, headerV)
-			r, ok := header2RuleM[key]
-			if ok {
-				r.Uris = append(r.Uris, rule.Uris...)
-			} else {
-				r = rule
-			}
-			header2RuleM[key] = r
 		}
 
 		for _, domain := range rule.Domains {
-			r, ok := domain2RuleM[domain]
+			domains = append(domains, domain)
+			_, ok := domain2RuleM[domain]
 			if ok {
-				r.Uris = append(r.Uris, rule.Uris...)
-			} else {
-				r = rule
+				return nil, errors.Errorf("domain duplicate: %s", domain)
 			}
-			domain2RuleM[domain] = r
+			domain2RuleM[domain] = rule
 		}
 	}
 
-	if globalRule == nil {
-		globalRule = new(entity.Rule)
-	}
-
 	// 排序
-	for key, rule := range header2RuleM {
-		header2RuleM[key] = rule.SortUris()
-	}
-
 	for key, rule := range domain2RuleM {
 		domain2RuleM[key] = rule.SortUris()
 	}
-
-	for key, rule := range domainAndHeader2M {
-		domainAndHeader2M[key] = rule.SortUris()
+	for _, rule := range globalRules {
+		rule.SortUris()
 	}
 
-	globalRule = globalRule.SortUris()
+	logger.Infof(context.Background(), "init rule matcher success, register domains: %+v, global rules len: %d, endpoints: %+v", domains, len(globalRules), endpointNames)
 
-	matcher = &Matcher{
+	return &matcher{
 		endpointName2HostM: endpointName2HostM,
-		header2RuleM:       header2RuleM,
 		domain2RuleM:       domain2RuleM,
-		globalRule:         globalRule,
-	}
+		globalRules:        globalRules,
+	}, nil
 }

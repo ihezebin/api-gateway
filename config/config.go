@@ -2,6 +2,7 @@ package config
 
 import (
 	"api-gateway/domain/entity"
+	"encoding/json"
 	"os"
 
 	"github.com/ihezebin/oneness/config"
@@ -27,6 +28,11 @@ type RedisConfig struct {
 type LoggerConfig struct {
 	Level    logger.Level `json:"level" mapstructure:"level"`
 	Filename string       `json:"filename" mapstructure:"filename"`
+}
+
+func (c *Config) String() string {
+	data, _ := json.Marshal(c)
+	return string(data)
 }
 
 var gConfig *Config = &Config{}

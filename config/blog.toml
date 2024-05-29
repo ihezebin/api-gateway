@@ -5,7 +5,7 @@ domains = ["www.hezebin.com", "hezebin.com","blog.hezebin.com", "localhost:8080"
     paths = ["/api/*"]
     endpoint = "blog"
     auth = false
-    desc = "博客无需鉴权的 API"
+    desc = "博客无需鉴权的 API0"
     priority = 0
     [uris.rewrite]
         "/api" = "/"
@@ -15,7 +15,16 @@ domains = ["www.hezebin.com", "hezebin.com","blog.hezebin.com", "localhost:8080"
     paths = ["/api/user/*"]
     endpoint = "user-center"
     auth = false
-    desc = "用户中心 API"
+    desc = "用户中心 API3"
+    priority = 3
+    [uris.rewrite]
+    "/api" = "/"
+
+[[uris]]
+    paths = ["/api/user/*"]
+    endpoint = "user-center"
+    auth = false
+    desc = "用户中心 API1"
     priority = 1
     [uris.rewrite]
     "/api" = "/"
