@@ -7,7 +7,7 @@ port = 8080
 
 #[redis]
 #    addrs = ["redis-sts-0.redis.default:7000", "redis-sts-1.redis.default:7000", "redis-sts-2.redis.default:7000"]
-#    password = "HZB183318a."
+#    password = ""
 
 [[endpoints]]
     name = "blog"
