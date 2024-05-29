@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/ihezebin/oneness/logger"
 )
 
 func RuleMatcher(endpoints []*entity.Endpoint, rules []*entity.Rule) gin.HandlerFunc {
@@ -17,6 +18,8 @@ func RuleMatcher(endpoints []*entity.Endpoint, rules []*entity.Rule) gin.Handler
 		domain := c.Request.Host
 		header := c.Request.Header
 		path := c.Request.URL.Path
+
+		ctx := c.Request.Context()
 
 		rule := matcher.FindRule(domain, header)
 
@@ -31,6 +34,7 @@ func RuleMatcher(endpoints []*entity.Endpoint, rules []*entity.Rule) gin.Handler
 			return
 		}
 		host := matcher.FindEndpointHost(uri.Endpoint)
+		logger.Infof(ctx, "domain: %s, header: %s, path: %s, endpoint: %s, uri: %s", domain, header, path, uri.Endpoint, uri.Path)
 
 		c.Set(constant.ProxyPathKey, newPath)
 		c.Set(constant.ProxyHostKey, host)
