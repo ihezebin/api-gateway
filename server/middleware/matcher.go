@@ -8,11 +8,12 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/ihezebin/oneness/httpserver"
 	"github.com/ihezebin/oneness/logger"
 )
 
 func RuleMatcher(endpoints []*entity.Endpoint, rules []*entity.Rule) gin.HandlerFunc {
-	initMatcher(endpoints, rules)
+	initialize(endpoints, rules)
 
 	return func(c *gin.Context) {
 		domain := c.Request.Host
@@ -30,7 +31,9 @@ func RuleMatcher(endpoints []*entity.Endpoint, rules []*entity.Rule) gin.Handler
 		if uri == nil {
 			ctx := c.Request.Context()
 			logger.Infof(ctx, "not match rule. domain: %s, header: %s, path: %s", domain, header, path)
-			c.AbortWithStatus(http.StatusNotFound)
+			body := &httpserver.Body{}
+			body.WithErrorx(httpserver.NewError(httpserver.CodeNotFound, fmt.Sprintf("%s + %s 未注册网关路由", domain, path)))
+			c.AbortWithStatusJSON(http.StatusNotFound, body)
 			return
 		}
 		host := matcher.FindEndpointHost(uri.Endpoint)
@@ -94,8 +97,9 @@ func (m *Matcher) FindEndpointHost(name string) string {
 	return m.endpointName2HostM[name]
 }
 
-func initMatcher(endpoints []*entity.Endpoint, rules []*entity.Rule) {
+func initialize(endpoints []*entity.Endpoint, rules []*entity.Rule) {
 	endpointName2HostM := make(map[string]string)
+
 	header2RuleM := make(map[string]*entity.Rule)
 	domain2RuleM := make(map[string]*entity.Rule)
 	domainAndHeader2M := make(map[string]*entity.Rule)

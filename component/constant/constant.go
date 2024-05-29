@@ -9,5 +9,7 @@ const (
 	AuthenticationKey = "authentication"
 
 	HeaderKeyToken = "Token"
-	HeaderKeyUid   = "Uid"
+	HeaderKeyUid   = "H-Uid"
+
+	QueryKeyUid = "h_uid"
 )
