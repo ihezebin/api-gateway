@@ -19,8 +19,6 @@ func RuleMatcher(endpoints []*entity.Endpoint, rules []*entity.Rule) gin.Handler
 		header := c.Request.Header
 		path := c.Request.URL.Path
 
-		ctx := c.Request.Context()
-
 		rule := matcher.FindRule(domain, header)
 
 		timeout := rule.Timeout
@@ -29,12 +27,14 @@ func RuleMatcher(endpoints []*entity.Endpoint, rules []*entity.Rule) gin.Handler
 		}
 		uri, newPath := rule.FindPath(path)
 
+		ctx := c.Request.Context()
+		logger.Infof(ctx, "domain: %s, header: %s, path: %s, uri: %+v, newPath: %s", domain, header, path, uri, newPath)
+
 		if uri == nil {
 			c.AbortWithStatus(http.StatusNotFound)
 			return
 		}
 		host := matcher.FindEndpointHost(uri.Endpoint)
-		logger.Infof(ctx, "domain: %s, header: %s, path: %s, endpoint: %s, uri: %s", domain, header, path, host, newPath)
 
 		c.Set(constant.ProxyPathKey, newPath)
 		c.Set(constant.ProxyHostKey, host)
