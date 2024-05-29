@@ -34,7 +34,7 @@ func RuleMatcher(endpoints []*entity.Endpoint, rules []*entity.Rule) gin.Handler
 			return
 		}
 		host := matcher.FindEndpointHost(uri.Endpoint)
-		logger.Infof(ctx, "domain: %s, header: %s, path: %s, endpoint: %s, uri: %s", domain, header, path, uri.Endpoint, uri.Path)
+		logger.Infof(ctx, "domain: %s, header: %s, path: %s, endpoint: %s, uri: %s", domain, header, path, host, newPath)
 
 		c.Set(constant.ProxyPathKey, newPath)
 		c.Set(constant.ProxyHostKey, host)
