@@ -1,5 +1,5 @@
 timeout = 5
-domains = ["blog.hezebin.com", "localhost:8080"]
+domains = ["www.hezebin.com", "hezebin.com","blog.hezebin.com", "localhost:8080"]
 
 [[uris]]
     paths = ["/api/*"]

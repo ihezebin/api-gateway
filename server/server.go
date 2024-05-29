@@ -28,7 +28,7 @@ type Body struct {
 // @BasePath /
 func Run(ctx context.Context, conf *config.Config) error {
 	serverHandler := httpserver.NewServerHandlerWithOptions(
-		httpserver.WithLoggingRequest(true),
+		httpserver.WithLoggingRequest(false),
 		httpserver.WithLoggingResponse(false),
 		httpserver.WithMiddlewares(
 			middleware.Cors(),

@@ -27,10 +27,9 @@ func RuleMatcher(endpoints []*entity.Endpoint, rules []*entity.Rule) gin.Handler
 		}
 		uri, newPath := rule.FindPath(path)
 
-		ctx := c.Request.Context()
-		logger.Infof(ctx, "domain: %s, header: %s, path: %s, uri: %+v, newPath: %s", domain, header, path, uri, newPath)
-
 		if uri == nil {
+			ctx := c.Request.Context()
+			logger.Infof(ctx, "not match rule. domain: %s, header: %s, path: %s", domain, header, path)
 			c.AbortWithStatus(http.StatusNotFound)
 			return
 		}
