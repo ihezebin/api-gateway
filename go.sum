@@ -77,6 +77,8 @@ github.com/ihezebin/oneness v1.0.23 h1:j0KEqsgl8VqRnpv6cVQsnJQNHYKerxZlk1K3BxjCl
 github.com/ihezebin/oneness v1.0.23/go.mod h1:CqMInorrnIaEKOzzAnEmISRBggNdDns8CeKg002wXoM=
 github.com/ihezebin/oneness v1.0.24 h1:cOnHjtoJRz+JzKrC/818MuPOuAmF3zwLMio1SmTAgqA=
 github.com/ihezebin/oneness v1.0.24/go.mod h1:CqMInorrnIaEKOzzAnEmISRBggNdDns8CeKg002wXoM=
+github.com/ihezebin/oneness v1.0.30 h1:sq5cVDGAuQmVBKcKukOe8sDC504W3P1aMTmtm1xYWjs=
+github.com/ihezebin/oneness v1.0.30/go.mod h1:CqMInorrnIaEKOzzAnEmISRBggNdDns8CeKg002wXoM=
 github.com/jonboulle/clockwork v0.4.0 h1:p4Cf1aMWXnXAUh8lVfewRBx1zaTSYKrKMF2g3ST4RZ4=
 github.com/jonboulle/clockwork v0.4.0/go.mod h1:xgRqUGwRcjKCO1vbZUEtSLrqKoPSsUpK7fnezOII0kc=
 github.com/josharian/intern v1.0.0 h1:vlS4z54oSdjm0bgjRigI+G1HpF+tI+9rE5LLzOg8HmY=
