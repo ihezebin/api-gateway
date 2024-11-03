@@ -37,7 +37,7 @@ func Run(ctx context.Context, conf *config.Config) error {
 		httpserver.WithLoggingRequest(false),
 		httpserver.WithLoggingResponse(false),
 		httpserver.WithMiddlewares(
-			middleware.Cors(),
+			//middleware.Cors(),
 			matcher,
 			middleware.Authentication(),
 		),
