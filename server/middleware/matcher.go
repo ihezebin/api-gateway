@@ -25,7 +25,17 @@ func RuleMatcher(endpoints []*entity.Endpoint, rules []*entity.Rule) (gin.Handle
 		header := c.Request.Header
 		path := c.Request.URL.Path
 
+		ctx := c.Request.Context()
+
 		rule := m.FindRule(domain, header)
+		if rule == nil {
+
+			logger.Infof(ctx, "not match rule. domain: %s, header: %s", domain, header)
+			body := &httpserver.Body{}
+			body.WithErrorx(httpserver.NewError(httpserver.CodeNotFound, fmt.Sprintf("%s + %s 未注册域名到网关", domain, path)))
+			c.AbortWithStatusJSON(http.StatusNotFound, body)
+			return
+		}
 
 		timeout := rule.Timeout
 		if timeout == 0 {
@@ -34,10 +44,9 @@ func RuleMatcher(endpoints []*entity.Endpoint, rules []*entity.Rule) (gin.Handle
 		uri, newPath := rule.FindPath(path)
 
 		if uri == nil {
-			ctx := c.Request.Context()
-			logger.Infof(ctx, "not match rule. domain: %s, header: %s, path: %s", domain, header, path)
+			logger.Infof(ctx, "not match path. domain: %s, header: %s, path: %s", domain, header, path)
 			body := &httpserver.Body{}
-			body.WithErrorx(httpserver.NewError(httpserver.CodeNotFound, fmt.Sprintf("%s + %s 未注册网关路由", domain, path)))
+			body.WithErrorx(httpserver.NewError(httpserver.CodeNotFound, fmt.Sprintf("%s + %s 未注册路由到网关", domain, path)))
 			c.AbortWithStatusJSON(http.StatusNotFound, body)
 			return
 		}
