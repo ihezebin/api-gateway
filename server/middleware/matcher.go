@@ -29,7 +29,6 @@ func RuleMatcher(endpoints []*entity.Endpoint, rules []*entity.Rule) (gin.Handle
 
 		rule := m.FindRule(domain, header)
 		if rule == nil {
-
 			logger.Infof(ctx, "not match rule. domain: %s, header: %s", domain, header)
 			body := &httpserver.Body{}
 			body.WithErrorx(httpserver.NewError(httpserver.CodeNotFound, fmt.Sprintf("%s + %s 未注册域名到网关", domain, path)))
@@ -41,8 +40,8 @@ func RuleMatcher(endpoints []*entity.Endpoint, rules []*entity.Rule) (gin.Handle
 		if timeout == 0 {
 			timeout = 10
 		}
-		uri, newPath := rule.FindPath(path)
 
+		uri, newPath := rule.FindPath(path)
 		if uri == nil {
 			logger.Infof(ctx, "not match path. domain: %s, header: %s, path: %s", domain, header, path)
 			body := &httpserver.Body{}
