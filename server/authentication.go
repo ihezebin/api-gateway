@@ -8,6 +8,7 @@ import (
 	"github.com/ihezebin/jwt"
 	"github.com/ihezebin/olympus/httpserver"
 	"github.com/ihezebin/olympus/logger"
+	"github.com/redis/go-redis/v9"
 
 	"api-gateway/component/cache"
 	"api-gateway/component/constant"
@@ -61,14 +62,14 @@ func Authentication() gin.HandlerFunc {
 
 		tokenKey := fmt.Sprintf(constant.TokenRedisKeyFormat, token.Payload().Owner)
 		tokenVal, err := cache.RedisCacheClient().Get(ctx, tokenKey).Result()
-		if err != nil {
+		if err != nil && err != redis.Nil {
 			logger.WithError(err).Errorf(ctx, "get token from redis error, token: %s", tokenKey)
 			body.WithErr(httpserver.ErrorWithInternalServer())
 			c.AbortWithStatusJSON(http.StatusInternalServerError, body)
 			return
 		}
 
-		if tokenVal != tokenStr {
+		if tokenVal == "" || tokenVal != tokenStr {
 			body.WithErr(httpserver.ErrorWithAuthorizationFailed("令牌被重置"))
 			c.AbortWithStatusJSON(http.StatusUnauthorized, body)
 			return
