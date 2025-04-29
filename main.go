@@ -4,7 +4,8 @@ import (
 	"context"
 
 	"api-gateway/cmd"
-	"github.com/ihezebin/oneness/logger"
+
+	"github.com/ihezebin/olympus/logger"
 )
 
 func main() {

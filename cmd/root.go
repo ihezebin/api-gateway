@@ -1,18 +1,20 @@
 package cmd
 
 import (
-	"api-gateway/component/cache"
-	"api-gateway/config"
-	"api-gateway/server"
 	"context"
 	"os"
 	"path/filepath"
 	"time"
 
-	_ "github.com/ihezebin/oneness"
-	"github.com/ihezebin/oneness/logger"
+	_ "github.com/ihezebin/olympus"
+	"github.com/ihezebin/olympus/logger"
+	"github.com/ihezebin/olympus/runner"
 	"github.com/pkg/errors"
 	"github.com/urfave/cli/v2"
+
+	"api-gateway/component/cache"
+	"api-gateway/config"
+	"api-gateway/server"
 )
 
 var (
@@ -24,7 +26,7 @@ func Run(ctx context.Context) error {
 
 	app := &cli.App{
 		Name:    "go-template-ddd",
-		Version: "v1.0.0",
+		Version: "v1.0.1",
 		Usage:   "Rapid construction template of Web service based on DDD architecture",
 		Authors: []*cli.Author{
 			{Name: "hezebin", Email: "ihezebin@qq.com"},
@@ -63,9 +65,15 @@ func Run(ctx context.Context) error {
 			return nil
 		},
 		Action: func(c *cli.Context) error {
-			if err := server.Run(ctx, config.GetConfig()); err != nil {
-				logger.WithError(err).Fatalf(ctx, "server run error, port: %d", config.GetConfig().Port)
+			httpServer, err := server.NewServer(ctx, config.GetConfig())
+			if err != nil {
+				return errors.Wrap(err, "new http server err")
 			}
+
+			tasks := make([]runner.Task, 0)
+			tasks = append(tasks, httpServer)
+
+			runner.NewRunner(tasks...).Run(ctx)
 
 			return nil
 		},
@@ -78,18 +86,29 @@ func initComponents(ctx context.Context, conf *config.Config) error {
 	// init logger
 	if conf.Logger != nil {
 		logger.ResetLoggerWithOptions(
+			logger.WithLoggerType(logger.LoggerTypeZap),
 			logger.WithServiceName(conf.ServiceName),
-			logger.WithPrettyCallerHook(),
-			logger.WithTimestampHook(),
+			logger.WithCaller(),
+			logger.WithTimestamp(),
 			logger.WithLevel(conf.Logger.Level),
 			//logger.WithLocalFsHook(filepath.Join(conf.Pwd, conf.Logger.Filename)),
-			// 每天切割，保留 3 天的日志
-			logger.WithRotateLogsHook(filepath.Join(conf.Pwd, conf.Logger.Filename), time.Hour*24, time.Hour*24*3),
+			logger.WithRotate(logger.RotateConfig{
+				Path:               filepath.Join(conf.Pwd, conf.Logger.Filename),
+				MaxSizeKB:          1024 * 500, // 500 MB
+				MaxAge:             time.Hour * 24 * 7,
+				MaxRetainFileCount: 3,
+				Compress:           true,
+			}),
 		)
 	}
 
 	// init cache
 	cache.InitMemoryCache(time.Minute*5, time.Minute)
+	if conf.Redis != nil {
+		if err := cache.InitRedisCache(ctx, conf.Redis.Addrs, conf.Redis.Password); err != nil {
+			return errors.Wrap(err, "init redis cache client error")
+		}
+	}
 	if conf.Redis != nil {
 		if err := cache.InitRedisCache(ctx, conf.Redis.Addrs, conf.Redis.Password); err != nil {
 			return errors.Wrap(err, "init redis cache client error")

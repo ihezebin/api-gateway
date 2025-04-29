@@ -1,18 +1,17 @@
 package server
 
 import (
-	"api-gateway/config"
-	"api-gateway/server/handler"
-	"api-gateway/server/middleware"
 	"context"
+	"fmt"
 
-	"github.com/gin-contrib/pprof"
-	"github.com/gin-gonic/gin"
-	"github.com/ihezebin/oneness/httpserver"
+	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/ihezebin/olympus/httpserver"
+	"github.com/ihezebin/olympus/httpserver/middleware"
+	"github.com/ihezebin/olympus/runner"
 	"github.com/pkg/errors"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-	swaggerFiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
+
+	"api-gateway/config"
+	"api-gateway/server/router"
 )
 
 type Body struct {
@@ -21,34 +20,47 @@ type Body struct {
 	Data    interface{} `json:"data,omitempty"`
 }
 
-// Run server
-// @title Go Template DDD 示例 API 文档
-// @version 1.0
-// @description 这是一个使用 Gin 和 Swagger 生成 API 文档的示例。
-// @host localhost:8080
-// @BasePath /
-func Run(ctx context.Context, conf *config.Config) error {
-	matcher, err := middleware.RuleMatcher(conf.Endpoints, conf.Rules)
+func NewServer(ctx context.Context, conf *config.Config) (runner.Task, error) {
+	matcher, err := RuleMatcher(conf.Endpoints, conf.Rules)
 	if err != nil {
-		return errors.Wrapf(err, "init rule matcher error")
+		return nil, errors.Wrapf(err, "init rule matcher error")
 	}
 
-	serverHandler := httpserver.NewServerHandlerWithOptions(
-		httpserver.WithLoggingRequest(false),
-		httpserver.WithLoggingResponse(false),
+	server := httpserver.NewServer(
+		httpserver.WithPort(conf.Port),
+		httpserver.WithServiceName(conf.ServiceName),
 		httpserver.WithMiddlewares(
-			//middleware.Cors(),
+			middleware.Recovery(),
+			middleware.LoggingRequestWithoutHeader(),
+			middleware.LoggingResponseWithoutHeader(),
 			matcher,
-			middleware.Authentication(),
+			Authentication(),
 		),
+		httpserver.WithOpenAPInfo(openapi3.Info{
+			Version:     "1.0",
+			Description: "这是一个使用 Gin 和 OpenAPI 生成 API 文档的示例。",
+			Contact: &openapi3.Contact{
+				Name:  "ihezebin",
+				Email: "ihezebin@gmail.com",
+			},
+		}),
+		httpserver.WithOpenAPIServer(openapi3.Server{
+			URL:         fmt.Sprintf("http://localhost:%d", conf.Port),
+			Description: "本地开发环境",
+		}),
 	)
 
-	pprof.Register(serverHandler)
-	serverHandler.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-	serverHandler.GET("/metrics", gin.WrapH(promhttp.Handler()))
-	serverHandler.NoRoute(handler.Proxy)
+	server.RegisterRoutes()
+	server.Engine().NoRoute(router.Proxy)
 
-	httpserver.ResetServerHandler(serverHandler)
+	err = server.RegisterOpenAPIUI("/openapi", httpserver.StoplightUI)
+	if err != nil {
+		return nil, err
+	}
+	_ = server.RegisterOpenAPIUI("/redoc", httpserver.RedocUI)
+	_ = server.RegisterOpenAPIUI("/rapidoc", httpserver.RapidocUI)
+	_ = server.RegisterOpenAPIUI("/swagger", httpserver.SwaggerUI)
 
-	return httpserver.Run(ctx, conf.Port)
+	return server, nil
+
 }

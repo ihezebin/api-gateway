@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"os"
 
-	"github.com/ihezebin/oneness/config"
-	"github.com/ihezebin/oneness/logger"
+	"github.com/ihezebin/olympus/config"
+	"github.com/ihezebin/olympus/logger"
 	"github.com/pkg/errors"
 )
 
