@@ -12,4 +12,6 @@ const (
 	HeaderKeyUid   = "H-Uid"
 
 	QueryKeyUid = "h_uid"
+
+	TokenRedisKeyFormat = "token_%s"
 )

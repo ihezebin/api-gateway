@@ -59,7 +59,7 @@ func Authentication() gin.HandlerFunc {
 			return
 		}
 
-		tokenKey := tokenRedisKey(token.Payload().Owner)
+		tokenKey := fmt.Sprintf(constant.TokenRedisKeyFormat, token.Payload().Owner)
 		tokenVal, err := cache.RedisCacheClient().Get(ctx, tokenKey).Result()
 		if err != nil {
 			logger.WithError(err).Errorf(ctx, "get token from redis error, token: %s", tokenKey)
@@ -83,8 +83,4 @@ func Authentication() gin.HandlerFunc {
 
 		c.Next()
 	}
-}
-
-func tokenRedisKey(owner string) string {
-	return fmt.Sprintf("token_%s", owner)
 }
