@@ -39,6 +39,7 @@ func Proxy(c *gin.Context) {
 	newUrl.Path = newPath
 
 	request.URL = newUrl
+	request.Host = newUrl.Host
 	// 重置为新 request
 	request.RequestURI = ""
 
