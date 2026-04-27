@@ -94,8 +94,8 @@ func initComponents(ctx context.Context, conf *config.Config) error {
 			//logger.WithLocalFsHook(filepath.Join(conf.Pwd, conf.Logger.Filename)),
 			logger.WithRotate(logger.RotateConfig{
 				Path:               filepath.Join(conf.Pwd, conf.Logger.Filename),
-				MaxSizeKB:          1024 * 500, // 500 MB
-				MaxAge:             time.Hour * 24 * 7,
+				MaxSizeKB:          1024 * 100, // 100 MB
+				MaxAge:             time.Hour * 24 * 1,
 				MaxRetainFileCount: 3,
 				Compress:           true,
 			}),
