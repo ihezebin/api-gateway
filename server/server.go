@@ -26,7 +26,8 @@ func NewServer(ctx context.Context, conf *config.Config) (runner.Task, error) {
 		return nil, errors.Wrapf(err, "init rule matcher error")
 	}
 
-	server := httpserver.NewServer(
+	server, err := httpserver.NewServer(
+		ctx,
 		httpserver.WithPort(conf.Port),
 		httpserver.WithServiceName(conf.ServiceName),
 		httpserver.WithMiddlewares(
