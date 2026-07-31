@@ -8,7 +8,7 @@ require (
 	github.com/getkin/kin-openapi v0.131.0
 	github.com/gin-contrib/pprof v1.5.3
 	github.com/gin-gonic/gin v1.10.0
-	github.com/ihezebin/jwt v1.0.0
+	github.com/ihezebin/jwt v1.0.1
 	github.com/ihezebin/olympus v1.0.7
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/errors v0.9.1
